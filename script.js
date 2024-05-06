@@ -1,76 +1,101 @@
-const main = document.getElementById('main');
+const sobreMi = document.getElementById('sobreMi');
 const addUserBtn = document.getElementById('add-user');
 const doubleBtn = document.getElementById('double');
 const showMillionairesBtn = document.getElementById('show-millionaires');
 const sortBtn = document.getElementById('sort');
 const calculateWealthBtn = document.getElementById('calculate-wealth');
 
-// Vector para almacenar los usuarios
 let userList = [];
 
-// Función que obtiene de la API un nombre aleatorio,
-// genera una cantidad de dinero aleatoria cuyo máximo es 1.000.000
-// y añade al usuario con ambos datos
+// Obtener datos del localStorage al cargar la página
+document.addEventListener('DOMContentLoaded', () => {
+  userList = JSON.parse(localStorage.getItem('userList')) || [];
+  updateDOM();
+  updateLocalStorage(); // Asegúrate de actualizar LocalStorage al cargar la página
+});
 
-//async function getRandomUser() {
-  //let res = await fetch('https://randomuser.me/api');
-  //let data = await res.json();
-  //let user = data.results[0];
-  let user = data.results
+addUserBtn.addEventListener('click', getRandomUser);
+doubleBtn.addEventListener('click', doubleMoney);
+sortBtn.addEventListener('click', sortByRichest);
+showMillionairesBtn.addEventListener('click', showMillionaires);
+calculateWealthBtn.addEventListener('click', calculateWealth);
 
-  // TODO: Crea un objeto usuario (newUser) que tenga como atributos: name y money
-  let name= await fetch('https://randomuser.me/api');
-  let money= (int) (Math.Random()*1000000+1);
-  let newUser=(name, money)
+async function getRandomUser() {
+  let res = await fetch('https://randomuser.me/api');
+  let data = await res.json();
+  let user = data.results[0];
+  let newUser = {
+    name: `${user.name.first} ${user.name.last}`,
+    money: Math.random() * 100000,
+  };
   addData(newUser);
-//}
-
-// TODO: Función que añade un nuevo usuario (objeto) al listado de usuarios (array)
-function addData(newUser) {
-    userList.push(newUser);
+  updateLocalStorage(); // Actualiza LocalStorage después de agregar un nuevo usuario
 }
 
-add-user.addEventListener("click", addData); 
+function addData(obj) {
+  userList.push(obj);
+  updateLocalStorage();
+  updateDOM();
+}
 
-// TODO: Función que dobla el dinero de todos los usuarios existentes
-  let usuarios = new Map();
-  usuarios.set(userList);
+function doubleMoney() {
+  // Forma 1
+  userList.forEach((element) => {
+    element.money *= 2;
+  });
 
-  function doubleMoney() {
-    userList.map(element => {
-      element.money *= 2
-    });
-  }
+  // Forma 2
+  // userList = userList.map((element) => ({
+  //   name: element.name,
+  //   money: element.money * 2,
+  // }));
 
-double.addEventListener("click", doubleMoney);
+  updateDOM();
+  updateLocalStorage(); // Actualiza LocalStorage después de duplicar el dinero
+}
 
-// TODO: Función que ordena a los usuarios por la cantidad de dinero que tienen
 function sortByRichest() {
   userList.sort((a, b) => b.money - a.money);
-  updateDOM()
+  updateDOM();
+  updateLocalStorage(); // Actualiza LocalStorage después de ordenar por riqueza
 }
 
-// TODO: Función que muestra únicamente a los usuarios millonarios (tienen más de 1.000.000)
 function showMillionaires() {
-  userList=userList.filter(element => element.money > 1000000)}
-  updateDOM()
+  userList = userList.filter((element) => element.money > 1000000);
+  updateDOM();
+  updateLocalStorage(); // Actualiza LocalStorage después de mostrar solo millonarios
+}
 
-// TODO: Función que calcula y muestra el dinero total de todos los usuarios
 function calculateWealth() {
-  // TIP: Puedes usar reduce ()
+  let wealth = userList.reduce((acc, user) => (acc += user.money), 0);
+  let wealthElement = document.createElement('div');
+  let wealthFormatted = formatMoney(wealth);
+  wealthElement.id= "total";
+  let comprobacion= document.getElementById("total");
+  if (comprobacion){
+    comprobacion.parentElement.removeChild(comprobacion);
+  }
+  wealthElement.innerHTML = `<h3>Dinero total: <strong>${wealthFormatted}</strong></h3>`;
+  sobreMi.appendChild(wealthElement);
+  
 }
 
-// TODO: Función que actualiza el DOM
 function updateDOM() {
-  // TIP: Puedes usar forEach () para actualizar el DOM con cada usuario y su dinero
+  sobreMi.innerHTML = '<h2><strong>Persona</strong> Dinero</h2>';
+
+  userList.forEach((user) => {
+    let userElement = document.createElement('div');
+    userElement.classList.toggle('person');
+    let moneyFormatted = formatMoney(user.money);
+    userElement.innerHTML = `<strong>${user.name} </strong> ${moneyFormatted}`;
+    sobreMi.appendChild(userElement);
+  });
 }
 
-// Función que formatea un número a dinero
 function formatMoney(number) {
   return number.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + '€';
 }
 
-// Obtenemos un usuario al iniciar la app
-getRandomUser();
-
-// TODO: Event listeners
+function updateLocalStorage() {
+  localStorage.setItem('userList', JSON.stringify(userList));
+}
